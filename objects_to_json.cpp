@@ -54,7 +54,9 @@ static unsigned long getTimeSinceEpochMicros() {
             (std::chrono::system_clock::now().time_since_epoch()).count());
 }
 
-void dump_objects(const ibeosdk::ObjectListEcu& objects, std::ostream& output=std::cout) {
+void dump_objects(const ibeosdk::IbeoDataHeader hdr,
+		const ibeosdk::ObjectListEcu& objects, std::ostream& output=std::cout) {
+	// TODO: USE THE HEADER TIMESTAMP!!
 	json j = json::array({
 		{{"ts", getTimeSinceEpochMicros()/1e6}},
 		objects
@@ -78,7 +80,7 @@ int main(int argc, char** argv) {
 		hdr.deserialize(input);
 		if(hdr.getDataType() == objList.getDataType()) {
 			objList.deserialize(input, hdr);
-			dump_objects(objList);
+			dump_objects(hdr, objList);
 		} else {
 			input.ignore(hdr.getMessageSize());
 		}

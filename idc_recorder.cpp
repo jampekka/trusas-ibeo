@@ -1,7 +1,6 @@
 #include <ibeosdk/trackingbox.hpp>
 #include <ibeosdk/ecu.hpp>
 #include <ibeosdk/lux.hpp>
-#include <ibeosdk/devices/IdcFile.hpp>
 #include <iostream>
 #include <stdlib.h>
 
@@ -18,7 +17,6 @@ ibeosdk::IbeoSDK ibeoSDK;
 struct FrameDumper :
 		public ibeosdk::DataStreamer
 		 {
-	//ibeosdk::IdcFile writer;
 	std::ostream &output;
 	bool firstSample = true;
 	
@@ -26,16 +24,17 @@ struct FrameDumper :
 	}
 
 	virtual void onData(const ibeosdk::IbeoDataHeader& dh, const char* const data) {
+		ibeosdk::IbeoDataHeader oh(dh);
 		if(firstSample) {
-			ibeosdk::IbeoDataHeader ndh(dh);
-			ndh.setPreviousMessageSize(0);
-			ndh.serialize(output);
+			oh.setPreviousMessageSize(0);
 			firstSample = false;
-		} else {
-			dh.serialize(output);
 		}
-		
-		output.write(data, dh.getMessageSize());
+		// Shouldn't probably do this, but rewrite the
+		// header timestamp so we don't have to sync the
+		// clocks.
+		oh.setTimestamp(ibeosdk::Time::universalTime());
+		oh.serialize(output);
+		output.write(data, oh.getMessageSize());
 		output.flush();
 	}
 
